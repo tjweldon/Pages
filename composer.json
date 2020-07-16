@@ -1,0 +1,24 @@
+{
+  "name": "tjweldon/TechTest",
+  "description": "A lightweight standalone pagination component",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Thomas Weldon",
+      "email": "tomd90@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Pages\\": "src/",
+      "Pages\\Tests": "test/"
+    }
+  },
+  "require": {
+
+  },
+  "require-dev": {
+    "phpunit/phpunit": "9.2.6"
+  }
+}
