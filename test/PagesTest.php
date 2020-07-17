@@ -127,4 +127,35 @@ class PagesTest extends TestCase
         $this->expectExceptionMessage(ItemException::itemCollectionContainsNulls(array_keys($collection))->getMessage());
         $pages->appendCollection($collection);
     }
+
+
+    public function testLimitPageSize()
+    {
+        $pages = Pages::empty();
+        $itemsCount = 100;
+        $pages->appendCollection(array_fill(0, $itemsCount, "foo"));
+
+        $maxPageSize = 10;
+        $pages->limitPageSize($maxPageSize);
+
+        $expectedPageCount = intval(ceil($itemsCount / $maxPageSize));
+        $this->assertEquals($maxPageSize, $pages->getPageSizeLimit());
+        $this->assertEquals($expectedPageCount, $pages->getPageCount());
+    }
+
+    public function testLimitNumberOfPages()
+    {
+        $pages = Pages::empty();
+        $itemsCount = 100;
+        $pages->appendCollection(array_fill(0, $itemsCount, "foo"));
+
+        $maxNumberOfPages = 3;
+        $pages->limitPageCount($maxNumberOfPages);
+
+        $expectedMaxPageSize = intval(ceil($itemsCount / $maxNumberOfPages));
+        $this->assertEquals($maxNumberOfPages, $pages->getPageCount());
+        $this->assertLessThanOrEqual($expectedMaxPageSize, $pages->current()->getSize());
+    }
+
+
 }

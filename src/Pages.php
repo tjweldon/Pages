@@ -4,13 +4,34 @@ namespace Pages;
 
 use Iterator;
 use Pages\Exception\ItemException;
+use Pages\Exception\LimitsException;
+use Pages\Exception\PagesException;
 use Traversable;
 
 class Pages implements Iterator
 {
-    private int $pagesLimit = 0;
+    /**
+     * When this is non-zero it will enforce a maximum number of pages,
+     * the pages will be resized to satisfy this limit. The interface
+     * disallows this and $pageSizeLimit from being non-zero simultaneously
+     */
+    private int $pageCountLimit = 0;
+
+    /**
+     * When this is non-zero it will enforce a maximum page size (item count),
+     * the number of pages will increase to accommodate more items. The interface
+     * disallows this and $pageCountLimit from being non-zero simultaneously
+     */
     private int $pageSizeLimit = 0;
+
     private array $items = [];
+
+    private ?int $key = 0;
+
+    /**
+     * @var Page[]
+     */
+    private array $pageCache = [];
 
     public static function empty(): self
     {
@@ -22,6 +43,7 @@ class Pages implements Iterator
         if ($item === null) {
             throw ItemException::itemWasNull();
         }
+        $this->pageCache = [];
         $this->items[] = $item;
 
         return $this;
@@ -50,17 +72,36 @@ class Pages implements Iterator
 
     public function limitPageSize(int $maxPageSize): self
     {
-        return new self();
+        if ($maxPageSize <= 0) {
+            throw LimitsException::pageSizeIsLessThanOne($maxPageSize);
+        }
+        $this->pageCache = [];
+        $this->pageSizeLimit = $maxPageSize;
+        $this->pageCountLimit = 0;
+
+        return $this;
     }
 
-    public function limitNumberOfPages(int $maxPages): self
+    public function limitPageCount(int $maxPageCount): self
     {
-        return new self();
+        if ($maxPageCount <= 0) {
+            throw LimitsException::pageCountIsLessThanOne($maxPageCount);
+        }
+        $this->pageCache = [];
+        $this->pageCountLimit = $maxPageCount;
+        $this->pageSizeLimit = 0;
+
+        return $this;
     }
 
-    public function getPagesLimit(): int
+    public function getPageCountLimit(): int
     {
-        return $this->pagesLimit;
+        return $this->pageCountLimit;
+    }
+
+    public function getPageCount(): int
+    {
+        return $pageCount = $this->pageCountLimit ?: intval(ceil($this->getItemCount() / $this->pageSizeLimit));
     }
 
     public function getPageSizeLimit(): int
@@ -73,33 +114,69 @@ class Pages implements Iterator
         return $this->items;
     }
 
-    public function getPageNumber(): int
+    public function getItemCount(): int
     {
-        return $this->key();
+        return count($this->items);
     }
 
     public function current(): Page
     {
-        return new Page([]);
+        if ($this->getPageSizeLimit() && $this->getPageCountLimit()) {
+            throw PagesException::incompatibleLimits($this);
+        }
+
+        if (!$this->pageCache) {
+            $this->pageCache = $this->generatePages();
+        }
+
+        return $this->pageCache[$this->key];
     }
 
-    public function next(): Page
+    /**
+     * @return Page[]
+     */
+    private function generatePages(): array
     {
-        // TODO: Implement next() method.
+        $pageSize = $this->pageSizeLimit ?: intval($this->getItemCount() / $this->pageCountLimit);
+
+        if ($this->pageCountLimit) {
+            $remainder = $this->getItemCount() % $this->pageCountLimit;
+            $pageSize = !$remainder ?: $pageSize + 1;
+        }
+
+        $pageChunks = array_chunk($this->items, $pageSize, true);
+        $pages = array_map(
+            function ($pageChunk) {
+                return new Page($pageChunk);
+            },
+            $pageChunks
+        );
+
+        return $pages;
     }
 
-    public function key(): int
+    private function keyInBounds(?int $key): bool
     {
-        // TODO: Implement key() method.
+        return $key !== null && array_key_exists($key, $this->items);
+    }
+
+    public function next(): void
+    {
+        $this->key = $this->keyInBounds($this->key + 1) ? $this->key + 1 : null;
+    }
+
+    public function key(): ?int
+    {
+        return $this->key;
     }
 
     public function valid(): bool
     {
-        // TODO: Implement valid() method.
+        return $this->keyInBounds($this->key());
     }
 
     public function rewind(): void
     {
-        // TODO: Implement rewind() method.
+        $this->key = 0;
     }
 }
