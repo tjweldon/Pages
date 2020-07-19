@@ -101,7 +101,9 @@ class Pages implements Iterator
 
     public function getPageCount(): int
     {
-        return $pageCount = $this->pageCountLimit ?: intval(ceil($this->getItemCount() / $this->pageSizeLimit));
+        $this->populatePageCache();
+
+        return count($this->pageCache);
     }
 
     public function getPageSizeLimit(): int
