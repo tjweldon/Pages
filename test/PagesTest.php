@@ -128,7 +128,6 @@ class PagesTest extends TestCase
         $pages->appendCollection($collection);
     }
 
-
     public function testLimitPageSize()
     {
         $pages = Pages::empty();
@@ -157,5 +156,67 @@ class PagesTest extends TestCase
         $this->assertLessThanOrEqual($expectedMaxPageSize, $pages->current()->getSize());
     }
 
+    public function testCurrentReturnsPages()
+    {
+        $pages = Pages::empty();
+        $itemsCount = 100;
+        $pages
+            ->appendCollection(array_fill(0, $itemsCount, "foo"))
+            ->limitPageCount(10);
+        ;
 
+        foreach ($pages as $page) {
+            $this->assertInstanceOf(Page::class, $page);
+        }
+    }
+
+    public function testIterateOverEmpty()
+    {
+        $pages = Pages::empty();
+
+        $pageCount = 0;
+        foreach ($pages as $page) {
+            $pageCount++;
+        }
+
+        $this->assertEquals(1, $pageCount);
+    }
+
+    public function testIterateMatchesPageCount()
+    {
+        $pages = Pages::empty();
+        $itemsCount = 100;
+        $pages
+            ->appendCollection(array_fill(0, $itemsCount, "foo"))
+            ->limitPageCount(10);
+        ;
+
+        $pageCount = 0;
+        foreach ($pages as $page) {
+            $pageCount++;
+        }
+
+        $this->assertEquals($pages->getPageCount(), $pageCount);
+    }
+
+    public function testRewind()
+    {
+        $pages = Pages::empty();
+        $itemsCount = 100;
+        $pages
+            ->appendCollection(array_fill(0, $itemsCount, "foo"))
+            ->limitPageCount(10);
+        ;
+
+        foreach ($pages as $page) {
+            continue;
+        }
+
+        $pageCount = 0;
+        foreach ($pages as $page) {
+            $pageCount++;
+        }
+
+        $this->assertEquals($pages->getPageCount(), $pageCount);
+    }
 }

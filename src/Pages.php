@@ -121,47 +121,57 @@ class Pages implements Iterator
 
     public function current(): Page
     {
-        if ($this->getPageSizeLimit() && $this->getPageCountLimit()) {
-            throw PagesException::incompatibleLimits($this);
-        }
+        $this->populatePageCache();
 
-        if (!$this->pageCache) {
-            $this->pageCache = $this->generatePages();
-        }
-
-        return $this->pageCache[$this->key];
+        return $this->pageCache ? $this->pageCache[$this->key()] : new Page([]);
     }
 
     /**
-     * @return Page[]
+     * Given that pagination typically is used for returning a page from a much larger result set,
+     * the Page objects are retained in object state. This means that full the paginated result set
+     * can be cached using a document store such as redis.
      */
-    private function generatePages(): array
+    private function populatePageCache(): void
     {
-        $pageSize = $this->pageSizeLimit ?: intval($this->getItemCount() / $this->pageCountLimit);
+        if (!$this->pageCache && $this->items) {
+            if ($this->getPageSizeLimit() && $this->getPageCountLimit()) {
+                throw PagesException::bothLimitsSet($this);
+            }
 
-        if ($this->pageCountLimit) {
-            $remainder = $this->getItemCount() % $this->pageCountLimit;
-            $pageSize = !$remainder ?: $pageSize + 1;
+            // If neither limit is set then all items occupy a single page
+            $pageCountLimit = $this->pageCountLimit;
+            if (!$this->getPageSizeLimit() && !$this->getPageCountLimit()) {
+                $pageCountLimit++;
+            }
+
+            $pageSize = $this->pageSizeLimit ?: intval($this->getItemCount() / $pageCountLimit);
+
+            if ($pageCountLimit) {
+                $remainder = $this->getItemCount() % $pageCountLimit;
+                $pageSize = !$remainder ? $pageSize : $pageSize + 1;
+            }
+
+            $pageChunks = array_chunk($this->items, $pageSize, true);
+            $this->pageCache = array_map(
+                function ($pageChunk) {
+                    return new Page($pageChunk);
+                },
+                $pageChunks
+            );
         }
-
-        $pageChunks = array_chunk($this->items, $pageSize, true);
-        $pages = array_map(
-            function ($pageChunk) {
-                return new Page($pageChunk);
-            },
-            $pageChunks
-        );
-
-        return $pages;
     }
 
     private function keyInBounds(?int $key): bool
     {
-        return $key !== null && array_key_exists($key, $this->items);
+        $this->populatePageCache();
+
+        return $key !== null && array_key_exists($key, $this->pageCache);
     }
 
     public function next(): void
     {
+        $this->populatePageCache();
+
         $this->key = $this->keyInBounds($this->key + 1) ? $this->key + 1 : null;
     }
 
@@ -172,7 +182,9 @@ class Pages implements Iterator
 
     public function valid(): bool
     {
-        return $this->keyInBounds($this->key());
+        $this->populatePageCache();
+
+        return $this->key === 0 || $this->keyInBounds($this->key);
     }
 
     public function rewind(): void
