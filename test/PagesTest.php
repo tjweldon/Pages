@@ -80,7 +80,7 @@ class PagesTest extends TestCase
     {
         $pages = Pages::empty();
 
-        $this->assertEquals(new Page([]), $pages->current());
+        $this->assertEquals(new Page([], 0), $pages->current());
         $this->assertEquals([], $pages->getItems());
     }
 
@@ -153,7 +153,7 @@ class PagesTest extends TestCase
 
         $expectedMaxPageSize = intval(ceil($itemsCount / $maxNumberOfPages));
         $this->assertEquals($maxNumberOfPages, $pages->getPageCount());
-        $this->assertLessThanOrEqual($expectedMaxPageSize, $pages->current()->getSize());
+        $this->assertLessThanOrEqual($expectedMaxPageSize, $pages->current()->getItemCount());
     }
 
     public function testCurrentReturnsPages()

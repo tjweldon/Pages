@@ -125,7 +125,7 @@ class Pages implements Iterator
     {
         $this->populatePageCache();
 
-        return $this->pageCache ? $this->pageCache[$this->key()] : new Page([]);
+        return $this->pageCache ? $this->pageCache[$this->key()] : new Page([], 0);
     }
 
     /**
@@ -155,10 +155,11 @@ class Pages implements Iterator
 
             $pageChunks = array_chunk($this->items, $pageSize, true);
             $this->pageCache = array_map(
-                function ($pageChunk) {
-                    return new Page($pageChunk);
+                function ($pageChunk, $pageNumber) {
+                    return new Page($pageChunk, $pageNumber);
                 },
-                $pageChunks
+                $pageChunks,
+                array_keys($pageChunks)
             );
         }
     }
