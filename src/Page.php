@@ -12,6 +12,7 @@ class Page implements Iterator
     private int $pageNumber = 0;
     private ?int $key;
     private int $initialIndex = 0;
+    private bool $indexRelativeToPagination = false;
 
     public function __construct(array $items, int $pageNumber, int $initialIndex = null)
     {
@@ -22,7 +23,7 @@ class Page implements Iterator
             throw ItemException::itemCollectionContainsNulls($nullKeys);
         }
 
-        $this->items = $items;
+        $this->items = array_values($items);
         $this->key = $items ? 0 : null;
         $this->pageNumber = $pageNumber;
         if ($initialIndex !== null) {
@@ -31,6 +32,13 @@ class Page implements Iterator
         if ($initialIndex === null && $items) {
             $this->initialIndex = array_keys($items)[0];
         }
+    }
+
+    public function indexRelativeToPagination(bool $indexRelativeToPagination) : self
+    {
+        $this->indexRelativeToPagination = $indexRelativeToPagination;
+
+        return $this;
     }
 
     public function getPageNumber(): int
@@ -43,31 +51,52 @@ class Page implements Iterator
         return count($this->items);
     }
 
-    /**
-     * @return mixed|void
-     */
+    public function getInitialIndex(): int
+    {
+        return $this->initialIndex;
+    }
+
+    private function getKey(): ?int
+    {
+        return $this->key + intval($this->indexRelativeToPagination) * $this->initialIndex;
+    }
+
+    private function keyIsValid(?int $key): bool
+    {
+        return $key !== null && array_key_exists($key, $this->items);
+    }
+
     public function current()
     {
-        // TODO: Implement current() method.
+        return $this->keyIsValid($this->key) ?
+            $this->items[$this->key] :
+            null
+        ;
     }
 
     public function next(): void
     {
-        // TODO: Implement next() method.
+        $this->key = $this->keyIsValid($this->key) && $this->keyIsValid($this->key + 1) ?
+            $this->key + 1 :
+            null
+        ;
     }
 
-    public function key(): int
+    public function key(): ?int
     {
-        // TODO: Implement key() method.
+        return $this->getKey();
     }
 
     public function valid(): bool
     {
-        // TODO: Implement valid() method.
+        return $this->keyIsValid($this->key);
     }
 
     public function rewind(): void
     {
-        // TODO: Implement rewind() method.
+        $this->key = $this->keyIsValid(0) ?
+            0 :
+            null
+        ;
     }
 }

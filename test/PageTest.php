@@ -14,8 +14,9 @@ class PageTest extends TestCase
     {
         return [
             [["foo", "bar"], 0],
-            [[], 0],
-            [["item"], 10],
+            [["foo", "bar"], 1, 100],
+            [[], 0, 0],
+            [["item"], 10, 10],
         ];
     }
 
@@ -28,12 +29,13 @@ class PageTest extends TestCase
     }
 
     /** @dataProvider validItemsProvider */
-    public function testConstructor(array $items, $pageNumber)
+    public function testConstructor(array $items, $pageNumber, $initialIndex = null)
     {
-        $page = new Page($items, $pageNumber);
+        $page = new Page($items, $pageNumber, $initialIndex);
 
         $this->assertEquals(count($items), $page->getItemCount());
         $this->assertEquals($pageNumber, $page->getPageNumber());
+        $this->assertEquals($initialIndex, $page->getInitialIndex());
     }
 
     /** @dataProvider invalidItemsProvider */
@@ -42,6 +44,44 @@ class PageTest extends TestCase
         $this->expectException(get_class($expectedException));
         $this->expectExceptionMessage($expectedException->getMessage());
 
-        $page = new Page($items, $pageNumber);
+        new Page($items, $pageNumber);
+    }
+
+    public function testIndexingRelativeToPage()
+    {
+        $page = new Page(
+            array_fill(0, 3, "foo"),
+            1,
+            3
+        );
+
+        $expectedIndices = [];
+        $actualIndices = [];
+        $expectedIndex = 0;
+        foreach ($page as $index => $item) {
+            $actualIndices[] = $index;
+            $expectedIndices[] = $expectedIndex;
+            $expectedIndex++;
+        }
+        $this->assertEquals($expectedIndices, $actualIndices);
+    }
+
+    public function testIndexingRelativeToPagination()
+    {
+        $page = new Page(
+            array_fill(0, 3, "foo"),
+            1,
+            3
+        );
+
+        $expectedIndices = [];
+        $actualIndices = [];
+        $expectedIndex = 3;
+        foreach ($page->indexRelativeToPagination(true) as $index => $item) {
+            $actualIndices[] = $index;
+            $expectedIndices[] = $expectedIndex;
+            $expectedIndex++;
+        }
+        $this->assertEquals($expectedIndices, $actualIndices);
     }
 }
