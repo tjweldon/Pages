@@ -128,6 +128,18 @@ class PagesTest extends TestCase
         $pages->appendCollection($collection);
     }
 
+    public function testGetPage()
+    {
+        $pages = Pages::empty()
+            ->appendCollection(array_fill(0, 100, "foo"))
+            ->limitPageSize(10)
+        ;
+
+        $expectedPage = new Page(array_fill(90, 10, "foo"), 9);
+        $this->assertEquals($expectedPage, $pages->getPage(9));
+        $this->assertEquals(null, $pages->getPage(11));
+    }
+
     public function testLimitPageSize()
     {
         $pages = Pages::empty();

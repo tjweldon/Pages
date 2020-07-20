@@ -51,6 +51,22 @@ class Page implements Iterator
         return count($this->items);
     }
 
+    public function getItems(): array
+    {
+        $items = $this->items;
+        if ($this->indexRelativeToPagination) {
+            $items = array_combine(
+                array_map(
+                    function ($key) { return $key + $this->initialIndex; },
+                    array_keys($this->items)
+                ),
+                array_values($this->items)
+            );
+        }
+
+        return $items;
+    }
+
     public function getInitialIndex(): int
     {
         return $this->initialIndex;
