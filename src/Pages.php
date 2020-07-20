@@ -121,6 +121,13 @@ class Pages implements Iterator
         return count($this->items);
     }
 
+    public function getPage(int $pageNumber): ?Page
+    {
+        $this->populatePageCache();
+
+        return $this->pageCache && $this->keyInBounds($pageNumber) ? $this->pageCache[$pageNumber] : null;
+    }
+
     public function current(): Page
     {
         $this->populatePageCache();

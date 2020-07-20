@@ -1,5 +1,5 @@
 {
-  "name": "tjweldon/TechTest",
+  "name": "tjweldon/Pages",
   "description": "A lightweight standalone pagination component",
   "minimum-stability": "stable",
   "license": "MIT",
@@ -12,7 +12,7 @@
   "autoload": {
     "psr-4": {
       "Pages\\": "src/",
-      "Pages\\Tests": "test/"
+      "Pages\\Tests\\": "test/"
     }
   },
   "require": {

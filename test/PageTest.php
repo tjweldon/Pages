@@ -84,4 +84,37 @@ class PageTest extends TestCase
         }
         $this->assertEquals($expectedIndices, $actualIndices);
     }
+
+    public function testGetItems()
+    {
+        $expectedItems = array_fill(0, 3, "foo");
+        $page = new Page(
+            $expectedItems,
+            1,
+            3
+        );
+
+        $items = $page
+            ->getItems()
+        ;
+
+        $this->assertSame($expectedItems, $items);
+    }
+
+    public function testGetItemsIndexedRelativeToPagination()
+    {
+        $expectedItems = array_fill(3, 3, "foo");
+        $page = new Page(
+            $expectedItems,
+            1,
+            3
+        );
+
+        $items = $page
+            ->indexRelativeToPagination(true)
+            ->getItems()
+        ;
+
+        $this->assertSame($expectedItems, $items);
+    }
 }
