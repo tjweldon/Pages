@@ -1,7 +1,7 @@
 {
-  "name": "tjweldon/Pages",
+  "name": "tjweldon/pages",
   "description": "A lightweight standalone pagination component",
-  "minimum-stability": "stable",
+  "minimum-stability": "dev",
   "license": "MIT",
   "authors": [
     {
